@@ -1,4 +1,4 @@
-FROM nginx:1.27.1
+FROM nginx:alpine
 
 # Adiciona o arquivo compactado e define as permissões do usuário nginx
 ADD --chown=nginx:nginx app.gz /usr/share/nginx/html/
