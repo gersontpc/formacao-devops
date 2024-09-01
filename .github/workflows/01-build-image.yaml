@@ -48,6 +48,8 @@ jobs:
           DOCKER_BUILDKIT: 1
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:v${{ steps.calculate-version.outputs.version-string }} .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest .
+
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -62,6 +64,7 @@ jobs:
       - name: Push image
         run: |
           docker image push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:v${{ steps.calculate-version.outputs.version-string }}
+          docker image push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Open Pull Request
         uses: devops-infra/action-pull-request@v0.5.5
