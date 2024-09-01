@@ -1,4 +1,4 @@
-FROM nginx
+FROM nginx:latest
 
 # Adiciona o arquivo compactado e define as permissões do usuário nginx
 ADD --chown=nginx:nginx app.gz /usr/share/nginx/html/
