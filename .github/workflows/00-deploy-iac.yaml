@@ -75,6 +75,7 @@ jobs:
             }
           }" >> provider.tf
           cat provider.tf
+
     - name: Terraform | Initialize backend
       run: terraform init
 
