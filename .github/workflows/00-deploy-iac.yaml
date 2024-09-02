@@ -1,0 +1,185 @@
+name: 'Terraform'
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: "us-east-1"
+  environment: "development"
+
+jobs:
+  deploy-iac:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+        shell: bash
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install yq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y yq
+
+    - name: Export variables from YAML
+      id: export-vars
+      run: |
+        # Read YAML and export variables
+        yq eval 'to_entries | .[] | "\(.key)=\(.value)"' variables.yaml >> $GITHUB_ENV
+
+    - name: Get Repository ID
+      run: |
+          echo "REPO_ID=$(curl -H "Authorization:token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }} | jq '.id')" >> $GITHUB_ENV
+
+    - name: Show Repository ID
+      run: echo "${{ env.REPO_ID }}"
+
+    - name: Show variables
+      run: |
+        env
+
+    - name: Terraform | Check required version
+      run: |
+        if [ -f versions.tf ];
+          then
+            echo "TF_VERSION=$(grep required_version versions.tf | sed 's/[^0-9.]*//g')" >> $GITHUB_ENV
+          else
+            echo "Using default iac version"
+            echo "TF_VERSION="${{ env.TF_VERSION }}"" >> $GITHUB_ENV
+        fi
+
+    - name: Terraform | Setup
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform | Show version
+      run: terraform --version
+
+    - name: Terraform | Get repository ID and Create State file S3 Bucket for Backend
+      run: |
+          echo "provider \"aws\" {
+            region = \"${{ env.AWS_REGION }}\"
+          }" > provider.tf
+
+          echo "terraform {
+            backend \"s3\" {
+              bucket   = \"${{ env.S3_BACKEND_NAME }}\"
+              key      = \"${{ env.REPO_ID }}/"${{ env.environment }}.tfvars"\"
+              region   = \"${{ env.AWS_REGION }}\"
+            }
+          }" >> provider.tf
+          cat provider.tf
+    - name: Terraform | Initialize backend
+      run: terraform init
+
+    - name: Terraform | Format code
+      run: terraform fmt
+
+    - name: Terraform | Check Syntax IaC Code
+      run: terraform validate
+
+    - name: TFLint | Setup TFLint
+      uses: terraform-linters/setup-tflint@v1
+      with:
+        tflint_version: latest
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: TFLint | Show version
+      run: tflint --version
+
+    - name: TFLint | Get plugin version
+      run: |
+          echo "TFLINT_VERSION=$(curl -L -s -H 'Accept: application/json' https://github.com/terraform-linters/tflint-ruleset-aws/releases/latest | jq -r '.tag_name' | tr -d 'v')" >> $GITHUB_ENV
+
+    - name: TFLint | Show plugin version
+      run: echo "${{ env.TFLINT_VERSION }}"
+
+    - name: TFLInt | Create plugin file
+      run: |
+        echo "plugin \"aws\" {
+            enabled = true
+            version = \"${{ env.TFLINT_VERSION }}\"
+            source  = \"github.com/terraform-linters/tflint-ruleset-aws\"
+        }" > .tflint.hcl
+
+    - name: TFLint | Copy tflint.hcl for directory config
+      uses: actions/cache@v2
+      with:
+        path: ~/.tflint.d/plugins
+        key: ubuntu-latest-tflint-${{ hashFiles('.tflint.hcl') }}
+
+    - name: TFLint | Init
+      run: tflint --init
+
+    - name: TFLint | Running
+      run: tflint -f compact
+
+    - name: Terraform | Plan
+      run: terraform plan -out tfplan.binary
+
+    - name: Terraform | Show to json file
+      run: terraform show -json tfplan.binary > plan.json
+
+    - name: Infracost | Setup
+      uses: infracost/actions/setup@v1
+      with:
+        api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+    - name: Infracost | Generate Infracost JSON
+      run: infracost breakdown --path plan.json --format json --out-file /tmp/infracost.json
+
+    - name: Infracost | Comment
+      uses: infracost/actions/comment@v1
+      with:
+        path: /tmp/infracost.json
+        behavior: update
+
+    - name: Terraform Docs | Render terraform docs inside the README.md and push changes back to PR branch
+      uses: terraform-docs/gh-actions@v1.0.0
+      with:
+        working-dir: .
+        output-file: README.md
+        output-method: inject
+        git-push: "true"
+
+    - name: Checking create or destroy infrastructure
+      run: |
+          echo "DESTROY=$(cat resources.json | jq -r .destroy)" >> $GITHUB_ENV
+
+    - name: Terraform Destroy
+      if: env.DESTROY == 'true'
+      run: terraform destroy -auto-approve -input=false
+
+    - name: Terraform Creating and Update
+      if: env.DESTROY != 'true'
+      run: |
+          RESOURCES_TO_DESTROY=$(cat resources.json | jq -r '.resources_to_destroy[]')
+          echo "Deleting specific resources"
+          echo $RESOURCES_TO_DESTROY
+          if [ "$RESOURCES_TO_DESTROY" != "" ]; then
+            echo "Deletado resources especificos"
+            echo $RESOURCES_TO_DESTROY
+            for i in $RESOURCES_TO_DESTROY; do terraform destroy -target $i -auto-approve; done
+          else
+            terraform apply -auto-approve -input=false
+          fi
+
+    # - name: Remove resources in statefile
+    #   run: |
+    #     RESOURCES_TO_DESTROY_TFSTATE=$(resources.json | jq -r '.resources_to_destroy_tfstate[]')
+    #     echo "Deleting specific resources"
+    #     echo $RESOURCES_TO_DESTROY_TFSTATE
+    #     if [ "$RESOURCES_TO_DESTROY_TFSTATE" != "" ]; then
+    #       echo "Deletado resources especificos"
+    #       echo $RESOURCES_TO_DESTROY_TFSTATE
+    #       for i in $RESOURCES_TO_DESTROY_TFSTATE; do terraform tfstate rm $i; done
+    #     fi

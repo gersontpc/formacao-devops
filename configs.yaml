@@ -1,0 +1,6 @@
+PROJECT_NAME: "2048-app"
+# IMAGE_NAME: container-technologies
+ENVIRONMENT: dev
+AWS_REGION: us-east-1
+TERRAFORM_VERSION: 1.9.5
+S3_BACKEND_NAME: terraform-backend
