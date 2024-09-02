@@ -23,11 +23,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Install Snapd
+      uses: snapcore/install-snapd@v3
+      with:
+        snapd-version: latest
+        systemd-reload: true
+
     - name: Install yq
       run: |
-        sudo apt update
-        sudo apt upgrade
-        sudo apt install  yq
+        sudo snap install yq
 
     - name: Export variables from YAML
       id: export-vars
