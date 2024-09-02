@@ -128,7 +128,7 @@ jobs:
       run: terraform show -json tfplan.binary > plan.json
 
     - name: Infracost | Setup
-      uses: infracost/actions/setup@v1
+      uses: infracost/actions/setup@v3
       with:
         api-key: ${{ secrets.INFRACOST_API_KEY }}
 
@@ -149,27 +149,13 @@ jobs:
         output-method: inject
         git-push: "true"
 
-    - name: Checking create or destroy infrastructure
-      run: |
-          echo "DESTROY=$(cat resources.json | jq -r .destroy)" >> $GITHUB_ENV
-
     - name: Terraform Destroy
-      if: env.DESTROY == 'true'
+      if: env.TERRAFORM_DESTROY == 'true'
       run: terraform destroy -auto-approve -input=false
 
     - name: Terraform Creating and Update
-      if: env.DESTROY != 'true'
-      run: |
-          RESOURCES_TO_DESTROY=$(cat resources.json | jq -r '.resources_to_destroy[]')
-          echo "Deleting specific resources"
-          echo $RESOURCES_TO_DESTROY
-          if [ "$RESOURCES_TO_DESTROY" != "" ]; then
-            echo "Deletado resources especificos"
-            echo $RESOURCES_TO_DESTROY
-            for i in $RESOURCES_TO_DESTROY; do terraform destroy -target $i -auto-approve; done
-          else
-            terraform apply -auto-approve -input=false
-          fi
+      if: env.TERRAFORM_DESTROY == 'false'
+      run: terraform apply -auto-approve -input=false
 
     # - name: Remove resources in statefile
     #   run: |
