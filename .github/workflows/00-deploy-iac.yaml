@@ -24,10 +24,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Install yq
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y yq
+    - name: Setup yq
+      uses: vegardit/gha-setup-yq@v1
 
     - name: Export variables from YAML
       id: export-vars
