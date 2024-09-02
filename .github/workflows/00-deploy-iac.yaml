@@ -70,7 +70,7 @@ jobs:
           echo "terraform {
             backend \"s3\" {
               bucket   = \"${{ env.S3_BACKEND_NAME }}\"
-              key      = \"${{ env.REPO_ID }}/"${{ env.environment }}.tfvars"\"
+              key      = \"${{ env.REPO_ID }}/"${{ env.ENVIRONMENT }}.tfvars"\"
               region   = \"${{ env.AWS_REGION }}\"
             }
           }" >> provider.tf
