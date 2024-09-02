@@ -31,7 +31,7 @@ jobs:
       id: export-vars
       run: |
         # Read YAML and export configs
-        yq eval 'to_entries | .[] | "\(.key)=\(.value)"' configs.yaml >> $GITHUB_ENV
+        yq eval 'to_entries | .[] | "\(.key)=\(.value)"' ./infra/configs.yaml >> $GITHUB_ENV
 
     - name: Get Repository ID
       run: |
