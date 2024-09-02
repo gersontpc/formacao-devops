@@ -69,7 +69,7 @@ jobs:
 
           echo "terraform {
             backend \"s3\" {
-              bucket   = \"${{ env.S3_BACKEND_NAME }}\"
+              bucket   = \"${{ env.S3_BACKEND_NAME }}-${{ secrets.ACCOUNT_ID }}\"
               key      = \"${{ env.REPO_ID }}/"terraform.tfstate"\"
               region   = \"${{ env.AWS_REGION }}\"
             }
