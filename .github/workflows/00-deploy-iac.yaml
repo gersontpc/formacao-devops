@@ -18,20 +18,16 @@ jobs:
     defaults:
       run:
         working-directory: infra
+        shell: bash
 
     steps:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Install Snapd
-      uses: snapcore/install-snapd@v3
-      with:
-        snapd-version: latest
-        systemd-reload: true
-
     - name: Install yq
       run: |
-        sudo snap install yq
+        sudo apt-get update
+        sudo apt-get install -y yq
 
     - name: Export variables from YAML
       id: export-vars
