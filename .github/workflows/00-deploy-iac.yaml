@@ -27,11 +27,11 @@ jobs:
     - name: Setup yq
       uses: vegardit/gha-setup-yq@v1
 
-    - name: Export variables from YAML
+    - name: Export configs from YAML
       id: export-vars
       run: |
-        # Read YAML and export variables
-        yq eval 'to_entries | .[] | "\(.key)=\(.value)"' variables.yaml >> $GITHUB_ENV
+        # Read YAML and export configs
+        yq eval 'to_entries | .[] | "\(.key)=\(.value)"' configs.yaml >> $GITHUB_ENV
 
     - name: Get Repository ID
       run: |
