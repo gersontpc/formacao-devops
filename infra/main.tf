@@ -4,7 +4,7 @@ resource "aws_instance" "manager" {
   instance_type          = var.instance_type
   key_name               = "vockey"
   user_data              = base64encode(file("${path.module}/templates/userdata.sh"))
-  vpc_security_group_ids = aws_security_group.swarm.id
+  vpc_security_group_ids = ["aws_security_group.swarm.id"]
 
   tags = {
     Name = "swarm-manager-0${count.index}"
@@ -17,7 +17,7 @@ resource "aws_instance" "nodes" {
   instance_type          = var.instance_type
   key_name               = "vockey"
   user_data              = base64encode(file("${path.module}/templates/userdata.sh"))
-  vpc_security_group_ids = aws_security_group.swarm.name
+  vpc_security_group_ids = ["aws_security_group.swarm.name"]
 
   tags = {
     Name = "swarm-node-0${count.index}"
