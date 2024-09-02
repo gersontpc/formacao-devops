@@ -8,7 +8,6 @@ on:
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: "us-east-1"
   environment: "development"
 
 jobs:
@@ -43,9 +42,6 @@ jobs:
     - name: Show Repository ID
       run: echo "${{ env.REPO_ID }}"
 
-    - name: Show variables
-      run: |
-        env
 
     - name: Terraform | Check required version
       run: |
@@ -54,7 +50,7 @@ jobs:
             echo "TF_VERSION=$(grep required_version versions.tf | sed 's/[^0-9.]*//g')" >> $GITHUB_ENV
           else
             echo "Using default iac version"
-            echo "TF_VERSION="${{ env.TF_VERSION }}"" >> $GITHUB_ENV
+            echo "TF_VERSION="${{ env.TERRAFORM_VERSION }}"" >> $GITHUB_ENV
         fi
 
     - name: Terraform | Setup
