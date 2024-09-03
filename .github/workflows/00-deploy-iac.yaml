@@ -147,7 +147,6 @@ jobs:
         working-dir: infra
         output-file: README.md
         output-method: inject
-        git-push: "true"
 
     - name: Terraform Destroy
       if: env.TERRAFORM_DESTROY == 'true'
