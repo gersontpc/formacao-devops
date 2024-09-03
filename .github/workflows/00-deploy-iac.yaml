@@ -144,7 +144,7 @@ jobs:
     - name: Terraform Docs | Render terraform docs inside the README.md and push changes back to PR branch
       uses: terraform-docs/gh-actions@v1.2.0
       with:
-        working-dir: ../
+        working-dir: .
         output-file: README.md
         output-method: inject
         git-push: "true"
