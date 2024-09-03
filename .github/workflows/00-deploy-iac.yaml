@@ -141,10 +141,10 @@ jobs:
         path: /tmp/infracost.json
         behavior: update
 
-    - name: Terraform Docs | Render terraform docs inside the README.md and push changes back to PR branch
+    - name: Terraform Docs | Render terraform docs inside the README.md
       uses: terraform-docs/gh-actions@v1.2.0
       with:
-        working-dir: .
+        working-dir: infra
         output-file: README.md
         output-method: inject
         git-push: "true"
@@ -156,14 +156,3 @@ jobs:
     - name: Terraform Creating and Update
       if: env.TERRAFORM_DESTROY == 'false'
       run: terraform apply -auto-approve -input=false
-
-    # - name: Remove resources in statefile
-    #   run: |
-    #     RESOURCES_TO_DESTROY_TFSTATE=$(resources.json | jq -r '.resources_to_destroy_tfstate[]')
-    #     echo "Deleting specific resources"
-    #     echo $RESOURCES_TO_DESTROY_TFSTATE
-    #     if [ "$RESOURCES_TO_DESTROY_TFSTATE" != "" ]; then
-    #       echo "Deletado resources especificos"
-    #       echo $RESOURCES_TO_DESTROY_TFSTATE
-    #       for i in $RESOURCES_TO_DESTROY_TFSTATE; do terraform tfstate rm $i; done
-    #     fi
