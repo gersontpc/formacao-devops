@@ -2,7 +2,7 @@ resource "aws_instance" "manager" {
   count                  = 1
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  key_name               = "vockey"
+  key_name               = "personal"
   user_data              = base64encode(file("${path.module}/templates/userdata.sh"))
   vpc_security_group_ids = ["aws_security_group.swarm.id"]
 
@@ -15,7 +15,7 @@ resource "aws_instance" "nodes" {
   count                  = 2
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  key_name               = "vockey"
+  key_name               = "personal"
   user_data              = base64encode(file("${path.module}/templates/userdata.sh"))
   vpc_security_group_ids = ["aws_security_group.swarm.name"]
 
